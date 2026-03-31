@@ -1,0 +1,3 @@
+obj/Debug/net10.0/Protos/Hub.cs \
+obj/Debug/net10.0/Protos/HubGrpc.cs: Protos/printer.proto\
+ Protos/hub.proto

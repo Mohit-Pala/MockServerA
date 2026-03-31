@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+option csharp_namespace = "LighthousePrintServer.Protos";
+
+package printer;
+
+enum PrinterStatus {
+  PRINTER_STATUS_UNKNOWN  = 0;
+  PRINTER_STATUS_IDLE     = 1;
+  PRINTER_STATUS_PRINTING = 2;
+  PRINTER_STATUS_PAUSED   = 3;
+  PRINTER_STATUS_ERROR    = 4;
+}
+
+message PrinterInfo {
+  string        printer_id   = 1;
+  string        display_name = 2;
+  bool          is_default   = 3;
+  PrinterStatus status       = 4;
+  bool          is_paused    = 5;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNKNOWN  = 0;
+  JOB_STATUS_PENDING  = 1;
+  JOB_STATUS_PRINTING = 2;
+  JOB_STATUS_PAUSED   = 3;
+  JOB_STATUS_ERROR    = 4;
+}
+
+message PrintJob {
+  string    job_id        = 1;
+  string    document_name = 2;
+  string    owner         = 3;
+  int32     pages         = 4;
+  JobStatus status        = 5;
+  int64     submitted_at  = 6;
+}
+
+message PrinterStateResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message PrinterAddDocResponse {
+  bool   success = 1;
+  string job_id  = 2;
+  string message = 3;
+}
+
+message EmptyRequest {}
+
+message PrinterInfoList {
+  repeated PrinterInfo printers = 1;
+}
+
+message PrinterIdInput {
+  string printer_id = 1;
+}
+
+message PrintQueueResponse {
+  string            printer_id = 1;
+  repeated PrintJob jobs       = 2;
+}
+
+message GenericResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message AddDocumentRequest {
+  string printer_id    = 1;
+  string document_name = 2;
+  bytes  document_data = 3;
+  string content_type  = 4;
+  int32  copies        = 5;
+}
+
+message AddDocumentResponse {
+  bool   success = 1;
+  string job_id  = 2;
+  string message = 3;
+}
+
+message RemoveDocumentRequest {
+  string printer_id = 1;
+  string job_id     = 2;
+}
+
+// Docs, look up how to add this, placeholder to make vscode shut it
+service PrinterService {
+  // get printers
+  rpc GetPrinters     (EmptyRequest)     returns (PrinterInfoList);
+
+  // get print queue
+  rpc GetPrintQueue   (PrinterIdInput)      returns (PrintQueueResponse);
+
+  // printer actions
+  rpc ClearPrintQueue (PrinterIdInput) returns (GenericResponse);
+
+  // add
+  rpc AddDocument     (AddDocumentRequest)     returns (AddDocumentResponse);
+
+  // del
+  rpc RemoveDocument  (RemoveDocumentRequest)  returns (GenericResponse);
+
+  // pause
+  rpc PausePrinter    (PrinterIdInput)    returns (GenericResponse);
+
+  // res
+  rpc ResumePrinter   (PrinterIdInput)   returns (GenericResponse);
+}

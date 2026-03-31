@@ -1,0 +1,73 @@
+syntax = "proto3";
+import "printer.proto";
+
+option csharp_namespace = "LighthousePrintServer.Protos";
+
+package hub;
+
+// Messages sent from B (print server) to A (hub)
+message PrintServerMessage {
+  oneof payload {
+    RegisterRequest register  = 1;
+    CommandResponse response  = 2;
+    Heartbeat       heartbeat = 3;
+  }
+}
+
+// Messages sent from A (hub) to B (print server)
+message HubMessage {
+  oneof payload {
+    RegisterResponse reg_res = 1;
+    HubCommand       command = 2;
+  }
+}
+
+message RegisterRequest {
+  string                       machine_id = 1;
+  string                       hostname   = 2;
+  repeated printer.PrinterInfo printers   = 3;
+}
+
+message RegisterResponse {
+  bool   accepted = 1;
+  string message  = 2;
+}
+
+message Heartbeat {}
+
+message CommandResponse {
+  string command_id = 1;
+  bool   success    = 2;
+  string error      = 3;
+  bytes  payload    = 4; // JSON-encoded result data
+}
+
+enum HubCommandType {
+  HUB_COMMAND_UNKNOWN         = 0;
+  HUB_COMMAND_GET_PRINTERS    = 1;
+  HUB_COMMAND_GET_QUEUE       = 2;
+  HUB_COMMAND_PAUSE_PRINTER   = 3;
+  HUB_COMMAND_RESUME_PRINTER  = 4;
+  HUB_COMMAND_CLEAR_QUEUE     = 5;
+  HUB_COMMAND_ADD_DOCUMENT    = 6;
+  HUB_COMMAND_REMOVE_DOCUMENT = 7;
+}
+
+message HubCommand {
+  string         command_id = 1;
+  HubCommandType type       = 2;
+  string         printer_id = 3;
+  // AddDocument fields
+  string document_name = 4;
+  bytes  document_data = 5;
+  string content_type  = 6;
+  int32  copies        = 7;
+  // RemoveDocument fields
+  string job_id = 8;
+}
+
+//
+service PrintServerHub {
+  // B calls this on A to register and receive commands
+  rpc Connect(stream PrintServerMessage) returns (stream HubMessage);
+}
